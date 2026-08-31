@@ -1,5 +1,4 @@
-# learn-fpga 
-_Learning FPGA, yosys, nextpnr, and RISC-V_ 
+# Learn RISC-V and Bare Metal Embedded Coding 
 
 Mission statement: To understand FemtoRV (RISC-V) code and try to add peripherals and write bare metal drivers. 
 
