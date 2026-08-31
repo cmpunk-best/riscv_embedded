@@ -34,6 +34,7 @@ module buart #(
 
     input  wr,
     input  rd,
+    input  wr_parity, 
     input  [7:0] tx_data,
     output [7:0] rx_data,
 
@@ -57,7 +58,7 @@ module buart #(
     reg [divwidth:0] recv_divcnt;
     wire recv_baud_clk = recv_divcnt[divwidth];
 
-    reg recv_state;
+    reg recv_state = 0;
     reg [8:0] recv_pattern;
     reg [7:0] recv_buf_data;
     reg recv_buf_valid;
@@ -65,6 +66,10 @@ module buart #(
     assign rx_data = recv_buf_data;
     assign valid = recv_buf_valid;
 
+    reg sel_parity = 0;
+    always @(posedge clk) begin 
+      if(wr_parity) sel_parity <= tx_data[0];
+    end 
 
     always @(posedge clk) begin
 
@@ -78,7 +83,7 @@ module buart #(
                if (!rx) begin
                  recv_state <= 1;
 		 /* verilator lint_off WIDTH */
-                 recv_divcnt <= half_baud_init;
+                 recv_divcnt <= half_baud_init; // Checking at mid point of baud rate 
 		 /* verilator lint_on WIDTH */
                end
                recv_pattern <= 0;
@@ -103,9 +108,10 @@ module buart #(
                    recv_divcnt <= baud_init;
 		   /* verilator lint_on WIDTH */
                  end
-               end else recv_divcnt <= recv_divcnt - 1;
+               end 
+               else 
+                 recv_divcnt <= recv_divcnt - 1;
             end
-
        endcase
     end
 
@@ -114,14 +120,16 @@ module buart #(
     reg [divwidth:0] send_divcnt;
     wire send_baud_clk  = send_divcnt[divwidth];
 
-    reg [9:0] send_pattern = 1;
+    reg [10:0] send_pattern = 1;
     assign tx = send_pattern[0];
-    assign busy = |send_pattern[9:1];
+    assign busy = |send_pattern[10:1];
+    // Setting up the Parity bit 
+    wire odd_parity_bit = ^tx_data;
 
     // The transmitter shifts until the stop bit is on the wire, 
     // and stops shifting then.
     always @(posedge clk) begin
-       if (wr) send_pattern <= {1'b1, tx_data[7:0], 1'b0};
+       if (wr) send_pattern <= sel_parity ? {1'b1,odd_parity_bit,tx_data[7:0], 1'b0}:{{2{1'b1}}, tx_data[7:0], 1'b0};
        else if (send_baud_clk & busy) send_pattern <= send_pattern >> 1;
        /* verilator lint_off WIDTH */		    
        if (wr | send_baud_clk) send_divcnt <= baud_init;

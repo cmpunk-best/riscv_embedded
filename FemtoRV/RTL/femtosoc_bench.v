@@ -17,7 +17,7 @@
 
 `timescale 1ns/1ns
 
-//`include "femtosoc_config.v"
+`include "femtosoc_config.v"
 //
 //`ifndef BENCH
 //`define BENCH
@@ -62,6 +62,10 @@ module femtoRV32_bench();
 
 `ifndef VERILATOR
    initial begin
+     // Dumping the C code into waves 
+      $dumpfile("femtosoc_waves.vcd"); 
+      $dumpvars(0, femtoRV32_bench);   
+
       pclk = 0;
       forever begin
 	 #1 pclk = ~pclk;

@@ -166,7 +166,6 @@ module femtosoc(
 /* verilator lint_on WIDTH */   
    
 /***************************************************************************************************
-/*
  * Memory and memory interface
  * memory map:
  *   address[21:2] RAM word address (4 Mb max).
@@ -310,7 +309,6 @@ module femtosoc(
 `endif   
    
 /***************************************************************************************************
-/*
  * Memory-mapped IO
  * Mapped IO uses "one-hot" addressing, to make decoder
  * simpler (saves a lot of LUTs), as in J1/swapforth,
@@ -453,6 +451,7 @@ HardwareConfig hwconfig(
       .wstrb(io_wstrb),
       .sel_dat(io_word_address[IO_UART_DAT_bit]),
       .sel_cntl(io_word_address[IO_UART_CNTL_bit]),	     
+      .sel_parity(io_word_address[IO_UART_ODD_PARITY_bit]),	     
       .wdata(io_wdata),
       .rdata(uart_rdata),
       .RXD(RXD_internal),

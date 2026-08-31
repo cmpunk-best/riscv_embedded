@@ -5,7 +5,7 @@
 // This file: driver for UART (serial over USB)
 // Wrapper around modified Claire Wolf's UART
 
-`ifdef BENCH
+`ifdef IGNORE_BENCH
 
 // If BENCH is define, using a fake UART that displays
 // each sent character.
@@ -15,6 +15,7 @@ module UART(
     input wire 	       wstrb,    // write strobe
     input wire 	       sel_dat,  // select data reg (rw)
     input wire 	       sel_cntl, // select control reg (r) 	       	    
+    input wire 	       sel_parity, //  select Parity bit 
     input wire [31:0]  wdata,    // data to be written
     output wire [31:0] rdata,    // data read
 
@@ -53,6 +54,7 @@ module UART(
     input wire 	       wstrb,    // write strobe
     input wire 	       sel_dat,  // select data reg (rw)
     input wire 	       sel_cntl, // select control reg (r) 	       	    
+    input wire 	       sel_parity, //  select Parity bit 
     input wire [31:0]  wdata,    // data to be written
     output wire [31:0] rdata,    // data read
 
@@ -69,16 +71,19 @@ wire serial_valid;
 
 buart #(
   .FREQ_MHZ(`NRV_FREQ),
-  .BAUDS(115200)
+  //.BAUDS(115200)
+  .BAUDS(5000000)
 ) the_buart (
    .clk(clk),
    .resetq(!brk),
    .tx(TXD),
-   .rx(RXD),
+   //.rx(RXD), 
+   .rx(TXD), // Using loop back to verify the Receiver logic 
    .tx_data(wdata[7:0]),
    .rx_data(rx_data),
    .busy(serial_tx_busy),
    .valid(serial_valid),
+   .wr_parity(sel_parity && wstrb),
    .wr(sel_dat && wstrb),
    .rd(sel_dat && rstrb) 
 );
