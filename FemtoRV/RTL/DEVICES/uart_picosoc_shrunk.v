@@ -59,7 +59,7 @@ module buart #(
     wire recv_baud_clk = recv_divcnt[divwidth];
 
     reg recv_state = 0;
-    reg [8:0] recv_pattern;
+    reg [9:0] recv_pattern;
     reg [7:0] recv_buf_data;
     reg recv_buf_valid;
 
@@ -70,6 +70,7 @@ module buart #(
     always @(posedge clk) begin 
       if(wr_parity) sel_parity <= tx_data[0];
     end 
+    wire [7:0] recv_buf_data_next = sel_parity ? ~recv_pattern[8:1] : ~recv_pattern[9:2];
 
     always @(posedge clk) begin
 
@@ -98,12 +99,12 @@ module buart #(
 		 // but as initialising registers to 10'b1_11111111_1 
 		 // is more costly than using zero, 
 		 // it is done with inverted logic. 
-                 if (recv_pattern[0]) begin
-                   recv_buf_data  <= ~recv_pattern[8:1];
-                   recv_buf_valid <= 1;
+                 if (recv_pattern[~sel_parity]) begin
+                   recv_buf_data  <= recv_buf_data_next;
+                   recv_buf_valid <= sel_parity ? (^recv_buf_data_next == ~recv_pattern[9]) : 1; //Drop the word if parity is not matched 
                    recv_state <= 0;
                  end else begin
-                   recv_pattern <= {~rx, recv_pattern[8:1]};
+                   recv_pattern <= {~rx, recv_pattern[9:1]} ;
 		   /* verilator lint_off WIDTH */		    
                    recv_divcnt <= baud_init;
 		   /* verilator lint_on WIDTH */
@@ -124,7 +125,7 @@ module buart #(
     assign tx = send_pattern[0];
     assign busy = |send_pattern[10:1];
     // Setting up the Parity bit 
-    wire odd_parity_bit = ^tx_data;
+    wire odd_parity_bit = (^tx_data); 
 
     // The transmitter shifts until the stop bit is on the wire, 
     // and stops shifting then.
