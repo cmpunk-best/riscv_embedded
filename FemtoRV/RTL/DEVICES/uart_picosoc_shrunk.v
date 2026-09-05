@@ -88,6 +88,7 @@ module buart #(
 		 /* verilator lint_on WIDTH */
                end
                recv_pattern <= 0;
+               recv_buf_valid <= 1'b0;
             end
 
          1: begin

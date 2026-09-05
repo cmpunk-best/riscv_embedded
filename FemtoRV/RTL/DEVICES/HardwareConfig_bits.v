@@ -4,6 +4,9 @@ localparam IO_LEDS_bit                  = 0;  // RW four leds
 localparam IO_UART_DAT_bit              = 1;  // RW write: data to send (8 bits) read: received data (8 bits)
 localparam IO_UART_CNTL_bit             = 2;  // R  status. bit 8: valid read data. bit 9: busy sending
 localparam IO_UART_ODD_PARITY_bit       = 12; // Add Parity bits to the Tx and Rx 
+localparam IO_PUMP_ON_bit               = 13;  // Turning on the PUMP 
+localparam IO_PUMP_ALARM_bit            = 14; // Turning on the PUMP ALARM in case of some error 
+localparam IO_PUMP_PRESSURE_bit         = 15; // Turning on the PUMP ALARM in case of some error 
 
 localparam IO_SSD1351_CNTL_bit          = 3;  // W  Oled display control
 localparam IO_SSD1351_CMD_bit           = 4;  // W  Oled display commands (8 bits)

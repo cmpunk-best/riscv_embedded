@@ -14,6 +14,7 @@
 `include "PLL/femtopll.v"           // The PLL (generates clock at NRV_FREQ)
 
 `include "DEVICES/uart.v"           // The UART (serial port over USB)
+`include "DEVICES/pump.v"           // The Pseudo Pump
 `include "DEVICES/SSD1351_1331.v"   // The OLED display
 `include "DEVICES/MappedSPIFlash.v" // Idem, but mapped in memory
 `include "DEVICES/MAX7219.v"        // 8x8 led matrix driven by a MAX7219 chip
@@ -445,6 +446,7 @@ HardwareConfig hwconfig(
 
    wire        uart_brk;
    wire [31:0] uart_rdata;
+   wire interrupt_request;
    UART uart(
       .clk(clk),
       .rstrb(io_rstrb),	     	     
@@ -452,6 +454,9 @@ HardwareConfig hwconfig(
       .sel_dat(io_word_address[IO_UART_DAT_bit]),
       .sel_cntl(io_word_address[IO_UART_CNTL_bit]),	     
       .sel_parity(io_word_address[IO_UART_ODD_PARITY_bit]),	     
+`ifdef NRV_INTERRUPTS
+      .interrupt_request(interrupt_request),	      
+`endif     
       .wdata(io_wdata),
       .rdata(uart_rdata),
       .RXD(RXD_internal),
@@ -462,6 +467,23 @@ HardwareConfig hwconfig(
    wire uart_brk = 1'b0;
 `endif 
 
+
+/********** Pseudo PUMP *******************************/
+`ifdef NRV_IO_PUMP 
+   wire [31:0] pump_rdata;
+PUMP #(
+  .COUNT(512)
+) pump(
+    .clk(clk),      // system clock
+    .rstrb(io_rstrb),    // read strobe		
+    .wstrb(io_wstrb),    // write strobe
+    .sel_pump_on(io_word_address[IO_PUMP_ON_bit]), 
+    .sel_pump_alarm(io_word_address[IO_PUMP_ALARM_bit]), 
+    .sel_pump_pressure(io_word_address[IO_PUMP_PRESSURE_bit]), 
+    .wdata(io_wdata),    // data to be written
+    .rdata(pump_rdata)    // data read
+); 
+`endif 
 /********** MAX7219 led matrix driver *******************************/
 `ifdef NRV_IO_MAX7219
    wire max7219_wbusy;
@@ -530,6 +552,9 @@ always @(posedge clk) begin
 `ifdef NRV_IO_UART
 	    | uart_rdata
 `endif	    
+`ifdef NRV_IO_PUMP
+	    | pump_rdata
+`endif	    
 `ifdef NRV_IO_SDCARD
 	    | sdcard_rdata
 `endif
@@ -578,7 +603,7 @@ end
     .mem_rbusy(mem_rbusy),
     .mem_wbusy(mem_wbusy),
 `ifdef NRV_INTERRUPTS
-    .interrupt_request(1'b0),	      
+    .interrupt_request(interrupt_request),	      
 `endif     
     .reset(reset && !uart_brk)
   );

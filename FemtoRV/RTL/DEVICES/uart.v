@@ -60,6 +60,9 @@ module UART(
 
     input wire 	       RXD, // UART pins
     output wire        TXD,
+`ifdef NRV_INTERRUPTS
+    output wire interrupt_request, 
+`endif     
 
     output reg         brk  // goes high one cycle when <ctrl><C> is pressed. 	    
 );
@@ -91,6 +94,11 @@ buart #(
 assign rdata =   sel_dat  ? {22'b0, serial_tx_busy, serial_valid, rx_data} 
                : sel_cntl ? {22'b0, serial_tx_busy, serial_valid, 8'b0   } 
                : 32'b0;   
+
+              
+`ifdef NRV_INTERRUPTS
+  assign interrupt_request = serial_valid;
+`endif     
 
 always @(posedge clk) begin
    brk <= serial_valid && (rx_data == 8'd3);
